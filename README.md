@@ -4,7 +4,7 @@ An n8n conversational workflow that helps users schedule meetings using Google G
 
 ## Workflow
 
-![AI Meeting Scheduler workflow](docs/workflow.png)
+![AI Meeting Scheduler workflow](docs/n8n work workflow.png)
 
 ## How it works
 
