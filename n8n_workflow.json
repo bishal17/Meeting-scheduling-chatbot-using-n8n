@@ -1,0 +1,328 @@
+{
+  "name": "AI Meeting Scheduler Chatbot (Sanitized)",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hi there!\nHow can I assist you today?",
+        "options": {}
+      },
+      "id": "8f2fb7ab-7a89-4889-9cf2-02c738d1a02c",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -160,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=This is user's input:\n\n{{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "Current date/time: {{ $now.setZone('Europe/Berlin').toISO() }}\nCalendar timezone: Europe/Berlin\n\nYou are a helpful business meeting assistant. Use the Info Tool for company information. Use the Google Calendar Get Tool to check availability before booking; each timeslot supports one meeting. Before scheduling, collect guest name, email, company name, and company address. Use Europe/Berlin timezone. If no year is specified, choose the next upcoming matching date. Do not schedule in the past. Ask for clarification if the time is ambiguous. After successful booking, record meeting details with the Meetings Tool.\n\nA knowledge graph tool is not connected in this workflow; do not claim to search or save knowledge graph data."
+        }
+      },
+      "id": "47753bb8-7723-4d5d-87db-a9632c2cafdf",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        144,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "id": "7b62425f-6255-4a36-87b3-1c6fb85d913f",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -112,
+        288
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "7ce20c74-286f-4d81-9fa6-e9a599289f1f",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        96,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Create a Google Calendar event. Provide a title, and complete start/end date-times in Europe/Berlin timezone. Do not use a past date unless explicitly requested.",
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_CALENDAR_ID",
+          "mode": "list",
+          "cachedResultName": "Select your calendar after import"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', `Meeting start date/time in ISO 8601 format with Europe/Berlin timezone.`, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', `Meeting end date/time in ISO 8601 format with Europe/Berlin timezone.`, 'string') }}",
+        "additionalFields": {
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', `Meeting title or purpose`, 'string') }}"
+        }
+      },
+      "id": "5b7a9976-4fd6-4a76-9cf0-a3297987f7dc",
+      "name": "Calendar Create Tool",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        464,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Record a successfully scheduled meeting. Provide Name, Contact (email), Company, Address, and Reason.",
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "YOUR_SHEET_NAME_OR_GID",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $fromAI('Name', 'Guest name', 'string') }}",
+            "Contact": "={{ $fromAI('Contact', 'Guest email', 'string') }}",
+            "Company": "={{ $fromAI('Company', 'Guest company name', 'string') }}",
+            "Address": "={{ $fromAI('Address', 'Guest company address', 'string') }}",
+            "Reason": "={{ $fromAI('Reason', 'Meeting purpose', 'string') }}",
+            "AppointmentKey": "={{ $fromAI('AppointmentKey', 'Stable booking key: lowercase attendee email and appointment start time in ISO format, separated by |. Reuse for retries.', 'string') }}"
+          },
+          "matchingColumns": [
+            "AppointmentKey"
+          ],
+          "schema": [
+            {
+              "id": "S.N.",
+              "displayName": "S.N.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "AppointmentKey",
+              "displayName": "AppointmentKey",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Contact",
+              "displayName": "Contact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Address",
+              "displayName": "Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "6eb2b76d-bb62-424d-ac47-d83c44a913da",
+      "name": "Meetings Tool",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        624,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Retrieve company information from the configured Google document.",
+        "operation": "get",
+        "documentURL": "https://docs.google.com/document/d/YOUR_DOCUMENT_ID/edit"
+      },
+      "id": "760fe9fa-00b1-48a2-9618-0f36ae68ec59",
+      "name": "Info Tool",
+      "type": "n8n-nodes-base.googleDocsTool",
+      "typeVersion": 2,
+      "position": [
+        800,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Check whether events exist in the requested timeslot on the selected calendar.",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_CALENDAR_ID",
+          "mode": "list",
+          "cachedResultName": "Select your calendar after import"
+        },
+        "options": {}
+      },
+      "id": "de335078-1ff2-404f-b7df-363d17a9a131",
+      "name": "Calendar get tool",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        304,
+        288
+      ]
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Create Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meetings Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Info Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar get tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 1,
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}
